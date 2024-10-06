@@ -6,6 +6,8 @@
 #include "GameFramework/GameModeBase.h"
 #include "CRONICSGameMode.generated.h"
 
+class AA_Exoplanetas;
+
 UCLASS(MinimalAPI)
 class ACRONICSGameMode : public AGameModeBase
 {
@@ -13,6 +15,12 @@ class ACRONICSGameMode : public AGameModeBase
 
 public:
 	ACRONICSGameMode();
+
+	virtual void BeginPlay() override;
+
+	virtual void Tick(float DeltaTime) override;
+
+
 };
 
 

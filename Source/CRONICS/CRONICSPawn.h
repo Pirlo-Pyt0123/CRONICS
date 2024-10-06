@@ -27,6 +27,8 @@ class ACRONICSPawn : public APawn
     UPROPERTY(EditAnywhere, Category = "Componentes")
     class UBoxComponent* Colision_Pawn;
 
+
+
 public:
 
     ACRONICSPawn();

@@ -7,7 +7,15 @@
 		{
 			"Name": "CRONICS",
 			"Type": "Runtime",
-			"LoadingPhase": "Default"
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine",
+				"Slate",
+				"SlateCore"
+			]
 		}
+	],
+	"TargetPlatforms": [
+		"WindowsNoEditor"
 	]
 }

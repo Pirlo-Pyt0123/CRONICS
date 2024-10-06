@@ -13,9 +13,8 @@
 #include "Engine/World.h"
 #include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
-#include "Components/AudioComponent.h"
-#include "Sound/SoundBase.h"
 #include "Engine/Engine.h"
+
 
 const FName ACRONICSPawn::MoveForwardBinding("MoveForward");
 const FName ACRONICSPawn::MoveRightBinding("MoveRight");
@@ -27,7 +26,7 @@ ACRONICSPawn::ACRONICSPawn()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	// Cargar y configurar el Mesh de la nave
+
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> ShipMesh(TEXT("StaticMesh'/Game/b1/source/blue.blue'"));
 	ShipMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ShipMesh"));
 	RootComponent = ShipMeshComponent;
@@ -36,17 +35,15 @@ ACRONICSPawn::ACRONICSPawn()
 	if (ShipMesh.Succeeded())
 	{
 		ShipMeshComponent->SetStaticMesh(ShipMesh.Object);
+		ShipMeshComponent->SetWorldScale3D(FVector(0.10f, 0.10f, 0.10f));
 		
-		
-
-		// No necesitamos rotar la nave, ya que queremos que la nave esté alineada correctamente
 	}
 
 	// Crear y configurar el CameraBoom para que esté detrás de la nave
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm0"));
 	CameraBoom->SetupAttachment(RootComponent); // Adjuntar el CameraBoom al RootComponent (la nave)
-	CameraBoom->TargetArmLength = 1400.0f; // Distancia de la cámara detrás de la nave
-	CameraBoom->SocketOffset = FVector(-220.0f, 0.f, 1000.f); // Ajustar la posición de la cámara detrás de la nave
+	CameraBoom->TargetArmLength = 400.0f; // Distancia de la cámara detrás de la nave
+	CameraBoom->SocketOffset = FVector(-900.0f, 0.f, 600.f); // Ajustar la posición de la cámara detrás de la nave
 	CameraBoom->bEnableCameraLag = true; // Habilitar el lag de la cámara para suavizar el movimiento
 	CameraBoom->CameraLagSpeed = 3.f; // Ajustar la velocidad del lag de la cámara para que siga suavemente
 
@@ -62,11 +59,15 @@ ACRONICSPawn::ACRONICSPawn()
 
 	// Crear y configurar el componente de colisión
 	Colision_Pawn = CreateDefaultSubobject<UBoxComponent>(TEXT("Colision_Pawn"));
-	Colision_Pawn->SetupAttachment(ShipMeshComponent);
+	Colision_Pawn->SetCollisionProfileName(TEXT("Pawn"));
+	Colision_Pawn->SetupAttachment(RootComponent);
+
 	Colision_Pawn->SetBoxExtent(FVector(1100.f, 500.f, 400.f));
 
+	
+
 	// Parámetros de manejo
-	Acceleration = 10000.f;
+	Acceleration = 8000.f;
 	TurnSpeed = 50.f;
 
 	MaxSpeed = 500.f;
@@ -75,21 +76,21 @@ ACRONICSPawn::ACRONICSPawn()
 	MoveSpeed = 500.0f;
 
 	bIsAccelerating = false;
-	DefaultAcceleration = 3000.0f;
+	DefaultAcceleration = 1000.0f;
 
-	Standard_Speed = 10000.0f;
+	Standard_Speed = 1000.0f;
 	Increased_Speed = 35000.0f;
 	Ultra_Increased_Speed = 6000.0f;
 
 	Acceleration = DefaultAcceleration;
-	CurrentForwardSpeed = 35500.0f; // Velocidad inicial
-	MaxeSpeed = 35500.0f; // Velocidad máxima
+	CurrentForwardSpeed = 15500.0f; // Velocidad inicial
+	MaxeSpeed = 30500.0f; // Velocidad máxima
 	MineSpeed = 500.0f; // Velocidad mínima
 
 	// Inicializar variables
 	bIsSuperAccelerating = false;
-	SuperAccelerationPower = 25000.0f;
-	SuperAcceleratedCameraLocation = FVector(-3000.f, 0.f, 700.f);
+	SuperAccelerationPower = 30000.0f;
+	SuperAcceleratedCameraLocation = FVector(-1000.f, 0.f, 700.f);
 
 	CurrentSpeedProgress = 1.0f;
 	SpeedRegenRate = 0.25f;
@@ -106,20 +107,21 @@ ACRONICSPawn::ACRONICSPawn()
 	// Configurar los sistemas de partículas
 	ProyecAceLeft->SetupAttachment(ShipMeshComponent);
 	ProyecAceRight->SetupAttachment(ShipMeshComponent);
-	static ConstructorHelpers::FObjectFinder<UParticleSystem> AccelerationParticlesAsset(TEXT("ParticleSystem'/Game/StarterContent/Particles/P_Fire.P_Fire'"));
+
+	static ConstructorHelpers::FObjectFinder<UParticleSystem> AccelerationParticlesAsset(TEXT("ParticleSystem'/Game/VFXSeries1/Particles/Energy/P_ChargedPlasma.P_ChargedPlasma'"));
 	if (AccelerationParticlesAsset.Succeeded())
 	{
 		ProyecAceLeft->SetTemplate(AccelerationParticlesAsset.Object);
 		ProyecAceLeft->bAutoActivate = false;
-		ProyecAceLeft->SetWorldScale3D(FVector(5.0f, 5.0f, 5.0f));
-		ProyecAceLeft->SetRelativeRotation(FRotator(0.0f, 180.0f, 0.0f));
-		ProyecAceLeft->SetRelativeLocation(FVector(-400.0f, -150.0f, 70.0f));
+		ProyecAceLeft->SetWorldScale3D(FVector(30.0f, 30.0f, 30.0f));
+		ProyecAceLeft->SetRelativeRotation(FRotator(0.0f, 0.0f, 0.0f));
+		ProyecAceLeft->SetRelativeLocation(FVector(-3000.0f, -150.0f, 70.0f));
 
 		ProyecAceRight->SetTemplate(AccelerationParticlesAsset.Object);
 		ProyecAceRight->bAutoActivate = false;
-		ProyecAceRight->SetWorldScale3D(FVector(5.0f, 5.0f, 5.0f));
-		ProyecAceRight->SetRelativeRotation(FRotator(0.0f, 180.0f, 0.0f));
-		ProyecAceRight->SetRelativeLocation(FVector(-400.0f, 150.0f, 70.0f));
+		ProyecAceRight->SetWorldScale3D(FVector(30.0f, 30.0f, 30.0f));
+		ProyecAceRight->SetRelativeRotation(FRotator(0.0f, 0.0f, 0.0f));
+		ProyecAceRight->SetRelativeLocation(FVector(-3000.0f, 150.0f, 70.0f));
 	}
 	
 }
@@ -180,7 +182,6 @@ void ACRONICSPawn::BeginPlay()
 {
 	Super::BeginPlay();
 
-	
 }
 
 void ACRONICSPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -244,7 +245,14 @@ void ACRONICSPawn::StartAccelerating()
 		ProyecAceLeft->Activate();
 		ProyecAceRight->Activate();
 
-	
+		
+	}
+	else
+	{
+		bIsAccelerating = false;
+		//Desactivar la particula de aceleracion
+		ProyecAceLeft->Deactivate();
+		ProyecAceRight->Deactivate();
 	}
 	
 }
